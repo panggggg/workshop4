@@ -8,8 +8,10 @@ from database.mongodb import MongoDB
 from config.development import config
 from model.student import createStudentModel, updateStudentModel
 
+
 mongo_config = config["mongo_config"]
-mongo_db = MongoDB(
+
+mongo_db = MongoDB(  # import MongoDB จาก mongodb.py
     mongo_config["host"],
     mongo_config["port"],
     mongo_config["user"],
@@ -18,13 +20,13 @@ mongo_db = MongoDB(
     mongo_config["db"],
     mongo_config["collection"],
 )
-mongo_db._connect()
+mongo_db._connect()  # เชื่อมกับ mongodb
 
 app = FastAPI()
 
-app.add_middleware(
+app.add_middleware(  # middleare เหมือนตัวคั่นกลาง เป็นส่วนนึงของ api
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # * คือ ทุกคนสามารถเข้าถึงได้หมด
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,13 +40,15 @@ def index():
 
 @app.get("/students/")
 def get_students(
-    sort_by: Optional[str] = None,
-    order: Optional[str] = Query(None, min_length=3, max_length=4),
+    sort_by: Optional[str] = None,  # Optional ถ้าไม่เป็น str ก็ให้เป็น none
+    order: Optional[str] = Query(
+        None, min_length=3, max_length=4
+    ),  # อย่างน้อยต้องมี3 ไม่เกิน 4
 ):
 
     try:
-        result = mongo_db.find(sort_by, order)
-    except:
+        result = mongo_db.find(sort_by, order)  # เรียกใช้ func find จาก mongodb.py
+    except:  # ถ้ามีปัญหา
         raise HTTPException(status_code=500, detail="Something went wrong !!")
 
     return JSONResponse(
@@ -52,9 +56,15 @@ def get_students(
         status_code=200,
     )
 
+    # api return [] -> mongo ยังไม่มี
+    # insert doc mongo
+    # api return ของใน mongo ออกมา
+
 
 @app.get("/students/{student_id}")
-def get_students_by_id(student_id: str = Path(None, min_length=10, max_length=10)):
+def get_students_by_id(
+    student_id: str = Path(None, min_length=10, max_length=10)
+):  # ไม่น้อยกว่า 10 ตัวและไม่เกิน 10 ตัว
     try:
         result = mongo_db.find_one(student_id)
     except:
@@ -70,9 +80,9 @@ def get_students_by_id(student_id: str = Path(None, min_length=10, max_length=10
 
 
 @app.post("/students")
-def create_books(student: createStudentModel):
+def create_books(student: createStudentModel):  # รับ createstudentmodel จากการ import
     try:
-        student_id = mongo_db.create(student)
+        student_id = mongo_db.create(student)  # เรียกใช้ method create
     except:
         raise HTTPException(status_code=500, detail="Something went wrong !!")
 
